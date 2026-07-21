@@ -1,0 +1,36 @@
+# ==========================================
+# Godot Engine Exclusions
+# ==========================================
+.godot/
+*.translation
+*.mono/
+
+# ==========================================
+# C# / .NET / Build Artifacts
+# ==========================================
+bin/
+obj/
+*.user
+*.userprefs
+*.sln.docstates
+
+# ==========================================
+# IDE Specific Files
+# ==========================================
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosv
+
+# JetBrains Rider
+.idea/
+
+# VS Code
+.vscode/
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# OS Specific
+.DS_Store
+Thumbs.db
