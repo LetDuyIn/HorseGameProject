@@ -8,61 +8,115 @@ public static class BreedingSystem
 {
     private static readonly Random _random = new();
     public static HorseModel Breeding(HorseModel father, HorseModel mother, string foalName)
-    {
-        var genePool = new List<(GeneModel Gene, float ParentStability)>();
-        foreach(var g in father.GenesChain) genePool.Add((g, father.GeneStability));
-        foreach(var g in mother.GenesChain) genePool.Add((g, mother.GeneStability));
+    {   
+        //const
+        float maxCapStability = 0.95f;
+        float minCapStability = 0.05f;
+        float bonusGeneCost = 0.1f;
 
-        float fatherStability = father.GeneStability;
-        float motherStability = mother.GeneStability;
-        float avgStability = (fatherStability + motherStability) / 2;
+        int maxCapNature = 100;
+        int minCapNature = 20;
 
+        float maxCapGRate = 4.0f;
+        float minCapGRate = 0.5f;
+
+        float maxCapDRate = 4.0f;
+        float minCapDRate = 0.5f;
+
+        //gene pool build
+        var genePool = new List<GeneModel>();
+        foreach(var g in father.GenesChain) genePool.Add(g);
+        foreach(var g in mother.GenesChain) genePool.Add(g);
+
+        //foal stability calc
+        float avgStability = (father.GeneStability + mother.GeneStability) / 2;
         float stabilityDrift = (float)(_random.NextDouble() * 0.16f - 0.08f);
+        float foalStability = Math.Clamp(avgStability + stabilityDrift, minCapStability, maxCapStability);
 
-        float foalStability = Math.Clamp(avgStability + stabilityDrift, 0.05f, 1.0f);
+        //foal biological calc
+        int avgNature = (father.Nature + mother.Nature) / 2;
+        float natFactor = (float)(1.0f + (_random.NextDouble() * 0.2f - 0.1f) * (1.0f - foalStability));
+        int foalNature = (int)Math.Clamp(avgNature * natFactor, minCapNature, maxCapNature);
 
+        float avgGRate = (father.GrowthRate + mother.GrowthRate) / 2;
+        float gRateDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
+        float foalGRate = Math.Clamp(avgGRate + gRateDrift, minCapGRate, maxCapGRate);
+
+        float avgDRate = (father.DecayRate + mother.DecayRate) / 2;
+        float dRateDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
+        float foalDRate = Math.Clamp(avgDRate + dRateDrift, minCapDRate, maxCapDRate);
+
+        //foal gene chain build
         List<GeneModel> foalGeneChain = new();
         int initalSlots = 4;
-
         while(foalGeneChain.Count < initalSlots && genePool.Count > 0)
         {
-            var chosenGene = SelectGeneByStrength(genePool);
-            float sourceStability = chosenGene.ParentStability;
-            genePool.Remove(chosenGene);
+            AddGeneProcess(genePool, foalGeneChain, foalStability);
+        }
 
-            string newGeneId = GeneMutation(chosenGene.Gene.GeneId, sourceStability);
-
-            float fluctatingRange = 0.1f * (1.0f - sourceStability);
-            float foalGeneStr;
-            float delta = (float)(_random.NextDouble() * fluctatingRange - (fluctatingRange / 2.0f));
-
-            if(newGeneId == chosenGene.Gene.GeneId)
+        while(genePool.Count > 0)
+        {
+            float roll = (float)_random.NextDouble();
+            if(roll <= foalStability)
             {
-                foalGeneStr = chosenGene.Gene.GeneStrength + delta;
+                AddGeneProcess(genePool, foalGeneChain,foalStability);
+                foalStability -= bonusGeneCost;
             }
             else
             {
-                float baseStr = GeneDatabase.Get(newGeneId).BaseGeneStrength;
-
-                foalGeneStr = baseStr + delta;
+                break;
             }
-
-            foalGeneStr = Math.Clamp(foalGeneStr, 0.01f, 0.95f);
-
-            foalGeneChain.Add(new GeneModel(newGeneId, foalGeneStr));
         }
-        var foal = new HorseModel(foalName, foalStability, foalGeneChain);
-        foal.ApplyGenetic();
 
+        //foal gene chain stability synchronize
+        foalStability = Math.Clamp(foalStability, minCapStability, maxCapStability);
+        foreach (var gene in foalGeneChain)
+        {
+            gene.GeneStability = foalStability;
+        }
+        
+        //new foal
+        var foal = new HorseModel(foalName, foalStability, foalGeneChain);
+        foal.Nature = foalNature; foal.GrowthRate = foalGRate; foal.DecayRate = foalDRate;
+        foal.ApplyGenetic();
         return foal;
     }
 
-    private static (GeneModel Gene, float ParentStability) SelectGeneByStrength(List<(GeneModel Gene, float ParentStability)> pool)
+    private static void AddGeneProcess(List<GeneModel> genePool, List<GeneModel> foalGeneChain, float stability)
+    {
+        var chosenGene = SelectGeneByStrength(genePool);
+        float sourceStability = chosenGene.GeneStability;
+        genePool.Remove(chosenGene);
+
+        string newGeneId = GeneMutation(chosenGene.GeneId, sourceStability);
+
+        float fluctatingRange = 0.1f * (1.0f - sourceStability);
+        float foalGeneStr;
+        float delta = (float)(_random.NextDouble() * fluctatingRange - (fluctatingRange / 2.0f));
+
+        if(newGeneId == chosenGene.GeneId)
+        {
+            foalGeneStr = chosenGene.GeneStrength + delta;
+        }
+        else
+        {
+            float baseStr = GeneDatabase.Get(newGeneId).BaseGeneStrength;
+            float inheritanceWeight = 0.3f;
+
+            foalGeneStr = (1.0f - inheritanceWeight) * baseStr + inheritanceWeight * chosenGene.GeneStrength + delta;
+        }
+
+        foalGeneStr = Math.Clamp(foalGeneStr, 0.01f, 0.95f);
+
+        foalGeneChain.Add(new GeneModel(newGeneId, foalGeneStr, stability));
+    }
+
+    private static GeneModel  SelectGeneByStrength(List<GeneModel> pool)
     {
         float totalWeight = 0;
         foreach(var gene in pool)
         {
-            totalWeight += gene.Gene.GeneStrength;
+            totalWeight += gene.GeneStrength;
         }
 
         double roll = _random.NextDouble() * totalWeight;
@@ -70,7 +124,7 @@ public static class BreedingSystem
 
         foreach(var gene in pool)
         {
-            curWeightSum += gene.Gene.GeneStrength;
+            curWeightSum += gene.GeneStrength;
             if(roll <= curWeightSum) return gene;
         }
 

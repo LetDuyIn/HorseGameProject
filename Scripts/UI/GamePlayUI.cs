@@ -1,6 +1,6 @@
 using Godot;
 using System;
-using Horse.Scripts.System; 
+using Horse.Scripts.Systems; 
 using Horse.Scripts.Models;
 
 namespace Horse.Scripts.UI;
