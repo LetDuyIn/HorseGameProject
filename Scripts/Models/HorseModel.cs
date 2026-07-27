@@ -14,10 +14,11 @@ public class HorseModel
 
     //biological parameter
     public int Age {get; set;} = 0; 
-    public int Nature{get; set;}
-    public float GrowthRate{get; set;}
-    public float DecayRate{get; set;}
+    public float Nature{get; set;}
+    public float GrowthRate{get; set;} // neu < 1.0 -> tang nhanh roi cham khi gan peak; > 1.0 thi tang cham roi nhanh dan khi gan peak
+    public float DecayRate{get; set;} // cang cao thi tut stat sau peak cang nhanh
     public int Peak{get; set;}
+    public float PeakFactor{get; set;}
 
     //stats
     public int Spd {get; set;} public int MaxSpd {get; set;}
@@ -38,10 +39,10 @@ public class HorseModel
 
     public void PeakAgeCalc()
     {
-        float baseAge = 30; //weeks
+        float baseAge = 192; //weeks
         float sensitivy = 0.4f;
-        int tmp = (int)(baseAge * Mathf.Pow(GrowthRate/DecayRate, sensitivy));
-        Peak = Math.Max(tmp, 24);
+        int tmp = (int)(baseAge * Mathf.Pow(PeakFactor/DecayRate, sensitivy));
+        Peak = tmp;
     }
 
     public void ApplyGenetic()
@@ -75,9 +76,12 @@ public class HorseModel
         }
 
         //peak age calculate
-        Nature = Math.Clamp(Nature, 20, 100);
+        Nature = Math.Clamp((int)Nature, 1, 100);
         GrowthRate = Math.Clamp(GrowthRate, 0.5f, 4.0f);
-        DecayRate = Math.Clamp(DecayRate, 0.5f, 4.0f);
+        //DecayRate = Math.Clamp(DecayRate, 0.5f, 4.0f);
+
+        float minPeakFactor = DecayRate * 0.49f;
+        PeakFactor = Math.Clamp(PeakFactor, minPeakFactor, 4.0f);
         PeakAgeCalc();
 
         //limit
@@ -96,8 +100,8 @@ public class HorseModel
 
     public void Grow()
     {
-        int baseDecay = 100;
-        int gain;
+        int baseDecay = 10;
+        float gain;
         if(Age <= Peak)
         {
             //calculate gain
@@ -105,16 +109,16 @@ public class HorseModel
             gain = (int)(Nature * Mathf.Pow(ratio, GrowthRate));
 
             //stat calculate
-            StatGain(gain);
+            StatGain((int)gain);
         }
         else
         {
             //calculate gain
             float ratio = (float)(Age - Peak) / Peak;
-            gain = (int)(Nature * Mathf.Exp(-DecayRate * ratio));
+            gain = (-1) * (int)(Nature * Mathf.Exp(-DecayRate * ratio));
 
             //stat calculate
-            StatGain(gain - baseDecay);
+            StatGain((int)gain - baseDecay);
         }
         Age++;
     }

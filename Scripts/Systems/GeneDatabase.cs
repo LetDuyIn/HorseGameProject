@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using Horse.Scripts.Models;
 
 namespace Horse.Scripts.Systems;
@@ -76,6 +77,17 @@ public static class GeneDatabase
         Register(new GeneDefinition("Hyper-03", 0.05f, 
             new() { { "MaxSpd", 400 }, { "InitSpd", 250 }, { "MaxPow", 400 }, { "InitPow", 250 }, { "MaxStam", 400 }, { "InitStam", 250 } }));
 
+        //biological stat
+        Register(new GeneDefinition("Late-00", 0.5f, 
+            new() { { "GRate",  3}, { "DRate", -1.5f } }));
+
+        Register(new GeneDefinition("Early-00", 0.5f, 
+            new() { { "GRate", -1.5f }, { "DRate", 3 } }));
+
+        Register(new GeneDefinition("Longevity-00", 0.5f, 
+            new() { {"DRate", 1} }));
+        
+        
     }
 
     private static void Register(GeneDefinition gene)

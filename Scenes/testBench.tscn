@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://csua0jlyru6cx"]
 
-[ext_resource type="Script" uid="uid://bqu1w3o4v0m4n" path="res://Scripts/Tests/TestBreedAndGrow.cs" id="1_gk5aw"]
+[ext_resource type="Script" uid="uid://cmn1560xyjree" path="res://Scripts/Tests/GrowthCompare.cs" id="1_gk5aw"]
 
 [node name="TestBench" type="Node2D" unique_id=359609906]
 script = ExtResource("1_gk5aw")

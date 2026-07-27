@@ -13,16 +13,6 @@ public static class BreedingSystem
         float maxCapStability = 0.95f;
         float minCapStability = 0.05f;
         float bonusGeneCost = 0.1f;
-
-        int maxCapNature = 100;
-        int minCapNature = 20;
-
-        float maxCapGRate = 4.0f;
-        float minCapGRate = 0.5f;
-
-        float maxCapDRate = 4.0f;
-        float minCapDRate = 0.5f;
-
         //gene pool build
         var genePool = new List<GeneModel>();
         foreach(var g in father.GenesChain) genePool.Add(g);
@@ -34,17 +24,21 @@ public static class BreedingSystem
         float foalStability = Math.Clamp(avgStability + stabilityDrift, minCapStability, maxCapStability);
 
         //foal biological calc
-        int avgNature = (father.Nature + mother.Nature) / 2;
+        float avgNature = (father.Nature + mother.Nature) / 2;
         float natFactor = (float)(1.0f + (_random.NextDouble() * 0.2f - 0.1f) * (1.0f - foalStability));
-        int foalNature = (int)Math.Clamp(avgNature * natFactor, minCapNature, maxCapNature);
+        float foalNature = avgNature * natFactor;
 
         float avgGRate = (father.GrowthRate + mother.GrowthRate) / 2;
         float gRateDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
-        float foalGRate = Math.Clamp(avgGRate + gRateDrift, minCapGRate, maxCapGRate);
+        float foalGRate = avgGRate + gRateDrift;
 
         float avgDRate = (father.DecayRate + mother.DecayRate) / 2;
         float dRateDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
-        float foalDRate = Math.Clamp(avgDRate + dRateDrift, minCapDRate, maxCapDRate);
+        float foalDRate = avgDRate + dRateDrift;
+
+        float avgPeakFactor = (father.PeakFactor + mother.PeakFactor) / 2;
+        float pFactorDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
+        float foalPFactor = avgPeakFactor + pFactorDrift;
 
         //foal gene chain build
         List<GeneModel> foalGeneChain = new();
@@ -77,7 +71,7 @@ public static class BreedingSystem
         
         //new foal
         var foal = new HorseModel(foalName, foalStability, foalGeneChain);
-        foal.Nature = foalNature; foal.GrowthRate = foalGRate; foal.DecayRate = foalDRate;
+        foal.Nature = foalNature; foal.GrowthRate = foalGRate; foal.DecayRate = foalDRate; foal.PeakFactor = foalPFactor;
         foal.ApplyGenetic();
         return foal;
     }
