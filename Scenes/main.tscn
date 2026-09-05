@@ -15,7 +15,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_jjgbg")
 
-[node name="HorseListContainner" type="VBoxContainer" parent="CanvasLayer/Control" unique_id=2088353086]
+[node name="HorseListContainer" type="VBoxContainer" parent="CanvasLayer/Control" unique_id=2088353086]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,7 +27,7 @@ offset_bottom = -231.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VScrollBar" type="VScrollBar" parent="CanvasLayer/Control/HorseListContainner" unique_id=611921828]
+[node name="VScrollBar" type="VScrollBar" parent="CanvasLayer/Control/HorseListContainer" unique_id=611921828]
 layout_mode = 2
 
 [node name="BtnLoad" type="Button" parent="CanvasLayer/Control" unique_id=1233230530]

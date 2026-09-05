@@ -6,7 +6,9 @@ using Horse.Scripts.Systems;
 namespace Horse.Scripts.Models;
 
 public class HorseModel
-{   //
+{   
+    private static readonly Random _random = new();
+    //
     public String Id {get; private set;} = Guid.NewGuid().ToString().Substring(0, 8);
     public String Name {get; set;}
     //default constant
@@ -20,28 +22,40 @@ public class HorseModel
     public int Peak{get; set;}
     public float PeakFactor{get; set;}
 
-    //stats
+    //main stats
     public int Spd {get; set;} public int MaxSpd {get; set;}
     public int Pow {get; set;} public int MaxPow {get; set;}
     public int Stam {get; set;} public int MaxStam {get; set;}
+
+    //training stats
+    public int Wis {get; set;}
+    public int Con {get; set;}
+    public int Energy {get; set;}
+    public int MaxEnergy {get; set;}
+    public bool Injured {get; set;}
+
+    //mood related stats
+    public Mood HorseMood {get; set;} = Mood.Normal;
+    public float Temperament { get; set; } = 0.5f;
 
     //gene parameter
     public float GeneStability { get; set; }
     public List<GeneModel> GenesChain {get; set;} = new();
 
+    //function
     public HorseModel() { }
 
-    public HorseModel(String name, float stability, List<GeneModel> genes_chain)
+    public HorseModel(String name, float stability, List<GeneModel> genesChain)
     {
         Name = name; GeneStability = Math.Clamp(stability, 0.05f, 1.0f); 
-        GenesChain = genes_chain;
+        GenesChain = genesChain;
     }
 
     public void PeakAgeCalc()
     {
         float baseAge = 192; //weeks
-        float sensitivy = 0.4f;
-        int tmp = (int)(baseAge * Mathf.Pow(PeakFactor/DecayRate, sensitivy));
+        float sensitivity = 0.4f;
+        int tmp = (int)(baseAge * Mathf.Pow(PeakFactor/DecayRate, sensitivity));
         Peak = tmp;
     }
 
@@ -78,7 +92,7 @@ public class HorseModel
         //peak age calculate
         Nature = Math.Clamp((int)Nature, 1, 100);
         GrowthRate = Math.Clamp(GrowthRate, 0.5f, 4.0f);
-        //DecayRate = Math.Clamp(DecayRate, 0.5f, 4.0f);
+        DecayRate = Math.Clamp(DecayRate, 0.5f, 4.0f);
 
         float minPeakFactor = DecayRate * 0.49f;
         PeakFactor = Math.Clamp(PeakFactor, minPeakFactor, 4.0f);
@@ -121,5 +135,26 @@ public class HorseModel
             StatGain((int)gain - baseDecay);
         }
         Age++;
+    }
+
+    public void UpdateMood()
+    {
+        float keepMoodChance = 1.0f - (Math.Clamp(Temperament, 0.0f, 1.0f) * 0.6f);
+
+        double roll = _random.NextDouble();
+
+        if (roll > keepMoodChance)
+        {
+            // 2. Nếu biến đổi: Ngẫu nhiên tăng (+1) hoặc giảm (-1) một bậc Mood
+            int delta = _random.Next(0, 2) == 0 ? -1 : 1;
+            int newMoodIndex = Math.Clamp((int)HorseMood + delta, 0, 4);
+
+            HorseMood = (Mood)newMoodIndex;
+        }
+    }
+
+    public float GetMoodMultiplier()
+    {
+        return HorseMood.GetMoodMult();
     }
 }

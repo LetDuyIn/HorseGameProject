@@ -24,26 +24,16 @@ public static class BreedingSystem
         float foalStability = Math.Clamp(avgStability + stabilityDrift, minCapStability, maxCapStability);
 
         //foal biological calc
-        float avgNature = (father.Nature + mother.Nature) / 2;
-        float natFactor = (float)(1.0f + (_random.NextDouble() * 0.2f - 0.1f) * (1.0f - foalStability));
-        float foalNature = avgNature * natFactor;
-
-        float avgGRate = (father.GrowthRate + mother.GrowthRate) / 2;
-        float gRateDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
-        float foalGRate = avgGRate + gRateDrift;
-
-        float avgDRate = (father.DecayRate + mother.DecayRate) / 2;
-        float dRateDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
-        float foalDRate = avgDRate + dRateDrift;
-
-        float avgPeakFactor = (father.PeakFactor + mother.PeakFactor) / 2;
-        float pFactorDrift = (float)(_random.NextDouble() * 0.2f - 0.1f); // Dịch chuyển độc lập
-        float foalPFactor = avgPeakFactor + pFactorDrift;
+        float foalNature  = BaseParentInherited(father.Nature, mother.Nature, foalStability, 0.2f);
+        float foalGRate   = BaseParentInherited(father.GrowthRate, mother.GrowthRate, foalStability, 0.15f);
+        float foalDRate   = BaseParentInherited(father.DecayRate, mother.DecayRate, foalStability, 0.15f);
+        float foalPFactor = BaseParentInherited(father.PeakFactor, mother.PeakFactor, foalStability, 0.15f);
+        
 
         //foal gene chain build
         List<GeneModel> foalGeneChain = new();
-        int initalSlots = 4;
-        while(foalGeneChain.Count < initalSlots && genePool.Count > 0)
+        int initialSlots = 4;
+        while(foalGeneChain.Count < initialSlots && genePool.Count > 0)
         {
             AddGeneProcess(genePool, foalGeneChain, foalStability);
         }
@@ -84,9 +74,9 @@ public static class BreedingSystem
 
         string newGeneId = GeneMutation(chosenGene.GeneId, sourceStability);
 
-        float fluctatingRange = 0.1f * (1.0f - sourceStability);
+        float fluctuatingRange = 0.1f * (1.0f - sourceStability);
         float foalGeneStr;
-        float delta = (float)(_random.NextDouble() * fluctatingRange - (fluctatingRange / 2.0f));
+        float delta = (float)(_random.NextDouble() * fluctuatingRange - (fluctuatingRange / 2.0f));
 
         if(newGeneId == chosenGene.GeneId)
         {
@@ -153,5 +143,14 @@ public static class BreedingSystem
         }
 
         return geneId;
+    }
+
+    private static float BaseParentInherited(float f, float m, float stability, float varianceRange = 0.1f)
+    {
+        float avg = (f + m) / 2;
+        float actualRange = varianceRange * (1.0f - stability);
+        float drift = 1.0f + (float)(_random.NextDouble() * (actualRange * 2) - actualRange);
+
+        return avg * drift;
     }
 }

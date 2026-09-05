@@ -3,7 +3,7 @@ using System;
 
 namespace Horse.Scripts.Models;
 
-public partial class HorseEnity : Node2D
+public partial class HorseEntity : Node2D
 {
 	public HorseModel Data{get; private set;}
 

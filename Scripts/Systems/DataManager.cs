@@ -17,14 +17,14 @@ public static class DataManager
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
     //save
-    public static void SavePalyerRanch()
+    public static void SavePlayerRanch()
     {
         if(PlayerRanch == null) return;
         try
         {
             string jsonString = JsonSerializer.Serialize(PlayerRanch, JsonOptions);
             WriteFile(PlayerRanchPath, jsonString);
-            GD.Print("[DataManger] save player successfully");
+            GD.Print("[DataManager] save player successfully");
         }catch(Exception e)
         {
             GD.PrintErr($"[DataManager] save player error: {e.Message}");
@@ -37,7 +37,7 @@ public static class DataManager
         {
             string jsonString = JsonSerializer.Serialize(NPCRanchesList, JsonOptions);
             WriteFile(NPCRanchesPath, jsonString);
-            GD.Print("[DataManger] save NPC successfully");
+            GD.Print("[DataManager] save NPC successfully");
         }catch(Exception e)
         {
             GD.PrintErr($"[DataManager] save NPC error: {e.Message}");
@@ -46,7 +46,7 @@ public static class DataManager
 
     public static void SaveAll()
     {
-        SavePalyerRanch();
+        SavePlayerRanch();
         SaveNPCRanches();
     }
 
@@ -55,7 +55,7 @@ public static class DataManager
     {
         if (!FileAccess.FileExists(PlayerRanchPath))
         {
-            GD.Print("[DataManger] Cant find the player file. Initalize first time play player");
+            GD.Print("[DataManager] Cant find the player file. Initialize first time play player");
             PlayerRanch = new RanchModel("PlayerRanch", "Player");
             //PlayerRanch.HorsesList.Add(new HorseModel("Beginner Horse"));
             return;
@@ -76,7 +76,7 @@ public static class DataManager
     {
         if (!FileAccess.FileExists(NPCRanchesPath))
         {
-            GD.Print("[DataManger] Cant find the NPC file. Initalize first time play NPC");
+            GD.Print("[DataManager] Cant find the NPC file. Initialize first time play NPC");
             InitializeNPC();
             return;
         }

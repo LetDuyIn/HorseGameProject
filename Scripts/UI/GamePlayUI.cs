@@ -12,7 +12,7 @@ public partial class GamePlayUI : Control
 
     public override void _Ready()
     {
-        _horseListContainer = GetNode<VBoxContainer>("HorseListContainner");
+        _horseListContainer = GetNode<VBoxContainer>("HorseListContainer");
         _btnLoadData = GetNode<Button>("BtnLoad");
 
         _btnLoadData.Pressed += OnLoadDataPressed;
