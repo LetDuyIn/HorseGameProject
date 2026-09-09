@@ -11,6 +11,9 @@ public class HorseModel
     //
     public String Id {get; private set;} = Guid.NewGuid().ToString().Substring(0, 8);
     public String Name {get; set;}
+    public bool Gender;
+    public List<Ancestor> SireLine = new();
+    public List<Ancestor> DamLine = new();
     //default constant
     int DefaultMaxStat = 1200; int InitialStat = 100;
 
@@ -23,9 +26,9 @@ public class HorseModel
     public float PeakFactor{get; set;}
 
     //main stats
-    public int Spd {get; set;} public int MaxSpd {get; set;}
-    public int Pow {get; set;} public int MaxPow {get; set;}
-    public int Stam {get; set;} public int MaxStam {get; set;}
+    public int Spd {get; private set;} public int MaxSpd {get; set;}
+    public int Pow {get; private set;} public int MaxPow {get; set;}
+    public int Stam {get; private set;} public int MaxStam {get; set;}
 
     //training stats
     public int Wis {get; set;}
@@ -84,13 +87,17 @@ public class HorseModel
                     //biological parameter
                     case "GRate": GrowthRate += mod.Value; break;
                     case "DRate": DecayRate += mod.Value; break;
-                    case "Nat": Nature += (int)mod.Value; break;
+                    case "Nat": Nature += mod.Value; break;
+
+                    //training stat
+                    case "Wis": Wis += (int)mod.Value; break;
+                    case "Con": Con += (int)mod.Value; break;
                 }
             }
         }
 
         //peak age calculate
-        Nature = Math.Clamp((int)Nature, 1, 100);
+        Nature = Math.Clamp(Nature, 1.0f, 3.0f);
         GrowthRate = Math.Clamp(GrowthRate, 0.5f, 4.0f);
         DecayRate = Math.Clamp(DecayRate, 0.5f, 4.0f);
 
@@ -105,11 +112,26 @@ public class HorseModel
 
     }
 
+    public void ModifySpd(int delta)
+    {
+        Spd = Math.Clamp(Spd + delta, InitialStat, MaxSpd);
+    }
+
+    public void ModifyPow(int delta)
+    {
+        Pow = Math.Clamp(Pow + delta, InitialStat, MaxPow);
+    }
+
+    public void ModifyStam(int delta)
+    {
+        Stam = Math.Clamp(Stam + delta, InitialStat, MaxStam);
+    }
+
     public void StatGain(int gain)
     {
-        Spd = Math.Clamp(Spd + gain, 0, MaxSpd);
-        Pow = Math.Clamp(Pow + gain, 0, MaxPow);
-        Stam = Math.Clamp(Stam + gain, 0, MaxStam);
+        ModifySpd(gain);
+        ModifyPow(gain);
+        ModifyStam(gain);
     }
 
     public void Grow()
@@ -145,7 +167,6 @@ public class HorseModel
 
         if (roll > keepMoodChance)
         {
-            // 2. Nếu biến đổi: Ngẫu nhiên tăng (+1) hoặc giảm (-1) một bậc Mood
             int delta = _random.Next(0, 2) == 0 ? -1 : 1;
             int newMoodIndex = Math.Clamp((int)HorseMood + delta, 0, 4);
 
@@ -156,5 +177,101 @@ public class HorseModel
     public float GetMoodMultiplier()
     {
         return HorseMood.GetMoodMult();
+    }
+
+    //data function
+    public HorseDataModel ToSaveData()
+    {
+        HorseDataModel data = new();
+
+        data.Id = this.Id;
+        data.Name = this.Name;
+        data.Gender = this.Gender;
+        foreach(Ancestor a in this.SireLine)
+        {
+            data.SireLine.Add(a);
+        }
+        foreach(Ancestor a in this.DamLine)
+        {
+            data.DamLine.Add(a);
+        }
+
+        data.Age = this.Age;
+        data.Nature = this.Nature;
+        data.GrowthRate = this.GrowthRate;
+        data.DecayRate = this.DecayRate;
+        data.Peak = this.Peak;
+        data.PeakFactor = this.PeakFactor;
+
+        data.Spd = this.Spd;
+        data.MaxSpd = this.MaxSpd;
+        data.Stam = this.Stam;
+        data.MaxStam = this.MaxStam;
+        data.Pow = this.Pow;
+        data.MaxPow = this.MaxPow;
+
+        data.Wis = this.Wis;
+        data.Con = this.Con;
+        data.Energy = this.Energy;
+        data.MaxEnergy = this.MaxEnergy;
+        data.Injured = this.Injured;
+
+        data.Temperament = this.Temperament;
+        data.HorseMood = this.HorseMood;
+
+        data.GeneStability = this.GeneStability;
+
+        foreach(var g in GenesChain)
+        {
+            data.GenesChain.Add(g);
+        }
+
+        return data;
+    }
+
+    public void FromSavedData(HorseDataModel data)
+    {
+        this.GenesChain.Clear();
+        
+        this.Id = data.Id;
+        this.Name = data.Name;
+        foreach(Ancestor a in data.SireLine)
+        {
+            this.SireLine.Add(a);
+        }
+        foreach(Ancestor a in data.DamLine)
+        {
+            this.DamLine.Add(a);
+        }
+
+        this.Age = data.Age;
+        this.Nature = data.Nature;
+        this.GrowthRate = data.GrowthRate;
+        this.DecayRate = data.DecayRate;
+        this.Peak = data.Peak;
+        this.PeakFactor = data.PeakFactor;
+
+        this.Spd = data.Spd;
+        this.MaxSpd = data.MaxSpd;
+        this.Stam = data.Stam;
+        this.MaxStam = data.MaxStam;
+        this.Pow = data.Pow;
+        this.MaxPow = data.MaxPow;
+
+        this.Wis = data.Wis;
+        this.Con = data.Con;
+        this.Energy = data.Energy;
+        this.MaxEnergy = data.MaxEnergy;
+        this.Injured = data.Injured;
+
+        this.Temperament = data.Temperament;
+        this.HorseMood = data.HorseMood;
+
+        this.GeneStability = data.GeneStability;
+
+        foreach(var d in data.GenesChain)
+        {
+            this.GenesChain.Add(d);
+        }
     }
 }

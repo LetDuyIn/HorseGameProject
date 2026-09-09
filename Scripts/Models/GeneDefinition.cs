@@ -14,4 +14,6 @@ public class GeneDefinition
         BaseGeneStrength = str;
         StatModifiers = mod;
     }
+
+    
 }

@@ -31,22 +31,22 @@ public class TrainingSystem
         int baseGain = TrainDatabase.Get(trainId).Gain;
         float intMult = GetIntensity(trainId);
         float moodMult = horse.GetMoodMultiplier();
-        float wisMult = horse.Wis;
+        float wisMult = 1.0f + horse.Wis/500.0f;
         int gain = 0;
 
         float mult = intMult * moodMult * wisMult * tempMult;
 
         //spd gain
         gain = (int)(baseGain * mult * train.GetModByType("SpdRatio"));
-        horse.Spd += gain;
+        horse.ModifySpd(gain);
 
         //sta gain
         gain = (int)(baseGain * mult * train.GetModByType("StaRatio"));
-        horse.Stam += gain;
+        horse.ModifyStam(gain);
 
         //pow gain
         gain = (int)(baseGain * mult * train.GetModByType("PowRatio"));
-        horse.Pow += gain;
+        horse.ModifyPow(gain);
 
         horse.Energy = Math.Max(0, horse.Energy - energyCost);
     }
@@ -85,7 +85,7 @@ public class TrainingSystem
         switch (level)
         {
             case 0:
-                levelCostMult = 0.0f;
+                levelCostMult = 1.0f;
                 break;
             case 1:
                 levelCostMult = 1.1f;

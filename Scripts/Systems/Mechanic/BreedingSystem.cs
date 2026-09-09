@@ -7,16 +7,37 @@ namespace Horse.Scripts.Systems;
 public static class BreedingSystem
 {
     private static readonly Random _random = new();
-    public static HorseModel Breeding(HorseModel father, HorseModel mother, string foalName)
+    public static HorseModel Breeding(HorseDataModel father, HorseDataModel mother, string foalName)
     {   
+        List<Ancestor> sireLine = new();
+        sireLine.AddRange(PedigreeSystem.PedigreeLineBuild(father));
+        List<Ancestor> damLine = new();
+        damLine.AddRange(PedigreeSystem.PedigreeLineBuild(mother));
+
+        List<(string id, int sGen, int dGen)> overlapData = PedigreeSystem.PedigreeOverlap(sireLine, damLine);
+        PedigreeType pedigreeType = PedigreeSystem.PedigreeTypeCheck(overlapData);
+
+        float bonusGeneCost = 0.0f;
+        
+        switch (pedigreeType)
+        {
+            case PedigreeType.OutCross:
+                bonusGeneCost = 0.01f;
+                break;
+            case PedigreeType.LineBreeding:
+                bonusGeneCost = 0.3f;
+                break;
+            case PedigreeType.MildInbreeding:
+                bonusGeneCost = 0.08f;
+                break;
+            case PedigreeType.Inbreeding:
+                bonusGeneCost = 0.1f;
+                break;
+        }
+
         //const
         float maxCapStability = 0.95f;
         float minCapStability = 0.05f;
-        float bonusGeneCost = 0.1f;
-        //gene pool build
-        var genePool = new List<GeneModel>();
-        foreach(var g in father.GenesChain) genePool.Add(g);
-        foreach(var g in mother.GenesChain) genePool.Add(g);
 
         //foal stability calc
         float avgStability = (father.GeneStability + mother.GeneStability) / 2;
@@ -32,10 +53,28 @@ public static class BreedingSystem
 
         //foal gene chain build
         List<GeneModel> foalGeneChain = new();
-        int initialSlots = 4;
-        while(foalGeneChain.Count < initialSlots && genePool.Count > 0)
+
+        if (pedigreeType != PedigreeType.OutCross)
+        {
+            List<GeneModel> pedigreeGenes = PedigreeSystem.AncestorGeneExtract(overlapData);
+            
+            foreach (var pGene in pedigreeGenes)
+            {
+                foalGeneChain.Add(pGene);
+            }
+        }
+
+        var genePool = new List<GeneModel>();
+        foreach(var g in father.GenesChain) genePool.Add(g);
+        foreach(var g in mother.GenesChain) genePool.Add(g);
+
+
+        int totalInitialSlots = 4;
+        int remainingInitialSlots = Math.Max(0, totalInitialSlots - foalGeneChain.Count);
+        while(remainingInitialSlots > 0 && genePool.Count > 0)
         {
             AddGeneProcess(genePool, foalGeneChain, foalStability);
+            remainingInitialSlots--;
         }
 
         while(genePool.Count > 0)
@@ -60,14 +99,27 @@ public static class BreedingSystem
         }
         
         //new foal
-        var foal = new HorseModel(foalName, foalStability, foalGeneChain);
-        foal.Nature = foalNature; foal.GrowthRate = foalGRate; foal.DecayRate = foalDRate; foal.PeakFactor = foalPFactor;
+        HorseModel foal = new HorseModel(foalName, foalStability, foalGeneChain)
+        {
+            Nature = foalNature,
+            GrowthRate = foalGRate,
+            DecayRate = foalDRate,
+            PeakFactor = foalPFactor,
+            SireLine = sireLine,
+            DamLine = damLine
+
+        };
+        
+        PedigreeSystem.PedigreeEffect(foal, pedigreeType, overlapData.Count);
+
         foal.ApplyGenetic();
         return foal;
     }
 
     private static void AddGeneProcess(List<GeneModel> genePool, List<GeneModel> foalGeneChain, float stability)
     {
+        if(genePool.Count == 0) return;
+        
         var chosenGene = SelectGeneByStrength(genePool);
         float sourceStability = chosenGene.GeneStability;
         genePool.Remove(chosenGene);
@@ -95,7 +147,7 @@ public static class BreedingSystem
         foalGeneChain.Add(new GeneModel(newGeneId, foalGeneStr, stability));
     }
 
-    private static GeneModel  SelectGeneByStrength(List<GeneModel> pool)
+    private static GeneModel SelectGeneByStrength(List<GeneModel> pool)
     {
         float totalWeight = 0;
         foreach(var gene in pool)

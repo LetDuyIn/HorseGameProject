@@ -86,8 +86,6 @@ public static class GeneDatabase
 
         Register(new GeneDefinition("Longevity-00", 0.5f, 
             new() { {"DRate", 1} }));
-        
-        
     }
 
     private static void Register(GeneDefinition gene)

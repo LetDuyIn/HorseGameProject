@@ -22,7 +22,7 @@ public static class DataManager
         if(PlayerRanch == null) return;
         try
         {
-            string jsonString = JsonSerializer.Serialize(PlayerRanch, JsonOptions);
+            string jsonString = JsonSerializer.Serialize(PlayerRanch.ToSaveData(), JsonOptions);
             WriteFile(PlayerRanchPath, jsonString);
             GD.Print("[DataManager] save player successfully");
         }catch(Exception e)
@@ -35,7 +35,12 @@ public static class DataManager
     {
         try
         {
-            string jsonString = JsonSerializer.Serialize(NPCRanchesList, JsonOptions);
+            List<RanchDataModel> dataList = new();
+            foreach(var npcR in NPCRanchesList)
+            {
+                dataList.Add(npcR.ToSaveData());
+            }
+            string jsonString = JsonSerializer.Serialize(dataList, JsonOptions);
             WriteFile(NPCRanchesPath, jsonString);
             GD.Print("[DataManager] save NPC successfully");
         }catch(Exception e)
@@ -64,7 +69,8 @@ public static class DataManager
         try
         {
             string json = ReadFile(PlayerRanchPath);
-            PlayerRanch = JsonSerializer.Deserialize<RanchModel>(json);
+            PlayerRanch = new RanchModel();
+            PlayerRanch.FromSavedData(JsonSerializer.Deserialize<RanchDataModel>(json));
             GD.Print($"[DataManager] Player ranch loaded: {PlayerRanch.Name}");
         }catch(Exception e)
         {
@@ -83,8 +89,16 @@ public static class DataManager
 
         try
         {
+            NPCRanchesList.Clear();
             string json = ReadFile(NPCRanchesPath);
-            NPCRanchesList = JsonSerializer.Deserialize<List<RanchModel>>(json) ?? new();
+            List<RanchDataModel> dataSet = JsonSerializer.Deserialize<List<RanchDataModel>>(json);
+            foreach(RanchDataModel d in dataSet)
+            {
+                RanchModel npcR = new RanchModel();
+                npcR.FromSavedData(d);
+                NPCRanchesList.Add(npcR);
+            }
+            
             GD.Print($"[DataManager] NPC ranches loaded: {NPCRanchesList.Count} ranches");
         }catch(Exception e)
         {
